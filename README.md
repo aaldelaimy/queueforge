@@ -95,12 +95,14 @@ go mod download
 docker compose up -d --build
 ```
 
+Once it's running, these are available on your machine:
+
 | Service | URL |
 |---|---|
-| API | http://localhost:8080 |
-| Grafana dashboard | http://localhost:3000/d/queueforge |
-| Prometheus | http://localhost:9090 |
-| Jaeger (traces) | http://localhost:16686 |
+| API | `http://localhost:8080` |
+| Grafana dashboard | `http://localhost:3000/d/queueforge` |
+| Prometheus | `http://localhost:9090` |
+| Jaeger (traces) | `http://localhost:16686` |
 
 ```bash
 # scale workers
