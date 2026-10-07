@@ -1,0 +1,20 @@
+{
+  "post_jobs_ms": {
+    "med": 0.44,
+    "p(95)": 0.81,
+    "p(99)": 1.29,
+    "max": 21.25
+  },
+  "http_reqs_per_s": 4624.2,
+  "http_error_rate": 0,
+  "k6_dropped_iterations": 47,
+  "jobs_submitted": 277452,
+  "jobs_completed": 277452,
+  "attempts": 277452,
+  "stale_requeued": 0,
+  "peak_completed_per_s": 2907,
+  "peak_queue_depth": 100224,
+  "job_attempt_p99_ms": 4.95,
+  "load_seconds": 121,
+  "drain_after_load_seconds": 36
+}

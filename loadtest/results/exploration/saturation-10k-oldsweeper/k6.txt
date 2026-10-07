@@ -1,0 +1,41 @@
+time="2026-10-07T18:42:53Z" level=warning msg="Insufficient VUs, reached 500 active VUs and cannot initialize more" executor=ramping-arrival-rate scenario=submit
+
+
+  █ THRESHOLDS 
+
+    http_req_duration{name:POST /jobs}
+    ✓ 'p(95)<250' p(95)=35.36ms
+
+    http_req_failed
+    ✓ 'rate<0.01' rate=0.00%
+
+
+  █ TOTAL RESULTS 
+
+    checks_total.......: 1358232 11318.194361/s
+    checks_succeeded...: 100.00% 1358232 out of 1358232
+    checks_failed......: 0.00%   0 out of 1358232
+
+    ✓ POST 202
+    ✓ GET 200
+
+    HTTP
+    http_req_duration..............: avg=4.67ms min=58.04µs  med=1ms    p(90)=12.13ms p(95)=34.05ms p(99)=48.18ms max=144.5ms 
+      { expected_response:true }...: avg=4.67ms min=58.04µs  med=1ms    p(90)=12.13ms p(95)=34.05ms p(99)=48.18ms max=144.5ms 
+      { name:POST /jobs }..........: avg=5.24ms min=231.45µs med=1.36ms p(90)=13.24ms p(95)=35.36ms p(99)=50.18ms max=142.98ms
+    http_req_failed................: 0.00%   0 out of 1358232
+    http_reqs......................: 1358232 11318.194361/s
+
+    EXECUTION
+    dropped_iterations.............: 14629   121.903964/s
+    iteration_duration.............: avg=9.45ms min=363.62µs med=1.95ms p(90)=24.82ms p(95)=70.15ms p(99)=94.66ms max=203.71ms
+    iterations.....................: 679116  5659.09718/s
+    vus............................: 81      min=0            max=500
+    vus_max........................: 500     min=50           max=500
+
+    NETWORK
+    data_received..................: 539 MB  4.5 MB/s
+    data_sent......................: 179 MB  1.5 MB/s
+
+
+

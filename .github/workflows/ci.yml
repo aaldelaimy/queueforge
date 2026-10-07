@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    # Integration tests run only when QUEUEFORGE_TEST_* is set.
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: queueforge
+          POSTGRES_PASSWORD: queueforge
+          POSTGRES_DB: queueforge_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U queueforge"
+          --health-interval 2s --health-timeout 2s --health-retries 20
+      redis:
+        image: redis:7
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 2s --health-timeout 2s --health-retries 20
+    env:
+      QUEUEFORGE_TEST_DATABASE_URL: postgres://queueforge:queueforge@localhost:5432/queueforge_test?sslmode=disable
+      QUEUEFORGE_TEST_REDIS_URL: redis://localhost:6379/0
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: gofmt
+        run: |
+          unformatted=$(gofmt -l cmd internal e2e)
+          if [ -n "$unformatted" ]; then
+            echo "Run gofmt -w on:"; echo "$unformatted"; exit 1
+          fi
+      - name: go vet
+        run: go vet -tags e2e ./...
+      - name: unit and integration tests
+        run: go test -race -count=1 ./...
+
+  e2e:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: start stack
+        run: docker compose up -d --build postgres redis api worker
+      - name: wait for readiness
+        run: |
+          for _ in $(seq 1 60); do
+            curl -fsS localhost:8080/ready && exit 0
+            sleep 2
+          done
+          exit 1
+      - name: end-to-end tests
+        run: go test -tags e2e -count=1 -v ./e2e/
+      - name: logs on failure
+        if: failure()
+        run: docker compose logs api worker
+      - name: stop stack
+        if: always()
+        run: docker compose down -v
+

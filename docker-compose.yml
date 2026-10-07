@@ -1,0 +1,99 @@
+# loadtest/run.sh joins the queueforge_default network, so pin the name.
+name: queueforge
+
+x-app-env: &app-env
+  DATABASE_URL: postgres://queueforge:queueforge@postgres:5432/queueforge?sslmode=disable
+  REDIS_URL: redis://redis:6379/0
+  OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318
+
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      # Local-only credentials.
+      POSTGRES_USER: queueforge
+      POSTGRES_PASSWORD: queueforge
+      POSTGRES_DB: queueforge
+    ports: ["5432:5432"]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./deploy/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U queueforge"]
+      interval: 2s
+      timeout: 2s
+      retries: 15
+
+  redis:
+    image: redis:7
+    # Keeps queued IDs across restarts. Not needed for correctness (the
+    # sweeper recovers them), but avoids the RequeueAfter delay.
+    command: ["redis-server", "--appendonly", "yes"]
+    ports: ["6379:6379"]
+    volumes: [redisdata:/data]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 2s
+      retries: 15
+
+  api:
+    build: {context: ., target: api}
+    image: queueforge-api
+    environment: *app-env
+    ports: ["8080:8080"]
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    restart: unless-stopped
+
+  worker:
+    build: {context: ., target: worker}
+    image: queueforge-worker
+    environment: *app-env
+    # Short job timeout so a killed worker's lease expires in 30s, not 3m.
+    command:
+      - -concurrency=${WORKER_CONCURRENCY:-4}
+      - -job-timeout=15s
+      - -shutdown-grace=20s
+      - -backlog-requeue-after=${BACKLOG_REQUEUE_AFTER:-10m}
+    deploy:
+      replicas: ${WORKER_REPLICAS:-2}
+    # Must exceed -shutdown-grace, or Docker SIGKILLs the worker mid-drain.
+    stop_grace_period: 30s
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    volumes: [./deploy/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro]
+    ports: ["9090:9090"]
+
+  grafana:
+    image: grafana/grafana:12.1.0
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+    volumes:
+      - ./deploy/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./deploy/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports: ["3000:3000"]
+    depends_on: [prometheus]
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.72.0
+    # The in-memory store is unbounded by default and was OOM-killed during
+    # load tests.
+    environment:
+      MEMORY_MAX_TRACES: "50000"
+    restart: unless-stopped
+    ports:
+      - "16686:16686" # UI
+      - "4318:4318"   # OTLP/HTTP
+
+volumes:
+  pgdata:
+  redisdata:

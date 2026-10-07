@@ -1,0 +1,40 @@
+
+
+  █ THRESHOLDS 
+
+    http_req_duration{name:POST /jobs}
+    ✓ 'p(95)<250' p(95)=817.62µs
+
+    http_req_failed
+    ✓ 'rate<0.01' rate=0.00%
+
+
+  █ TOTAL RESULTS 
+
+    checks_total.......: 554846  4623.673133/s
+    checks_succeeded...: 100.00% 554846 out of 554846
+    checks_failed......: 0.00%   0 out of 554846
+
+    ✓ POST 202
+    ✓ GET 200
+
+    HTTP
+    http_req_duration..............: avg=341.75µs min=66.2µs   med=303.16µs p(90)=587.66µs p(95)=698.5µs  p(99)=1.11ms max=20.43ms
+      { expected_response:true }...: avg=341.75µs min=66.2µs   med=303.16µs p(90)=587.66µs p(95)=698.5µs  p(99)=1.11ms max=20.43ms
+      { name:POST /jobs }..........: avg=498.63µs min=214.62µs med=438.91µs p(90)=687.41µs p(95)=817.62µs p(99)=1.32ms max=20.43ms
+    http_req_failed................: 0.00%  0 out of 554846
+    http_reqs......................: 554846 4623.673133/s
+
+    EXECUTION
+    dropped_iterations.............: 75     0.624994/s
+    iteration_duration.............: avg=728.17µs min=361.2µs  med=644.16µs p(90)=1ms      p(95)=1.19ms   p(99)=1.91ms max=26.51ms
+    iterations.....................: 277423 2311.836567/s
+    vus............................: 4      min=0           max=8 
+    vus_max........................: 70     min=50          max=70
+
+    NETWORK
+    data_received..................: 220 MB 1.8 MB/s
+    data_sent......................: 73 MB  609 kB/s
+
+
+
